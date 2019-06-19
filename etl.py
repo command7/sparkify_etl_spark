@@ -8,3 +8,7 @@ with open('etl_config.cfg', 'r') as config_file:
 aws_access = conf_parser['AWS']['AWS_ACCESS_KEY']
 aws_secret = conf_parser['AWS']['AWS_SECRET_KEY']
 
+spark = SparkSession.builder.config("spark.jars.packages",
+                                    "org.apache.hadoop:hadoop-aws:2.7.0")\
+    .getOrCreate()
+
