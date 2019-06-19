@@ -12,3 +12,8 @@ spark = SparkSession.builder.config("spark.jars.packages",
                                     "org.apache.hadoop:hadoop-aws:2.7.0")\
     .getOrCreate()
 
+log_data = spark.read.json(path='log-data/*')
+song_data = spark.read.json(path='song_data/*/*/*/*.json')
+log_data.show()
+song_data.show()
+
