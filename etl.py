@@ -141,10 +141,23 @@ def etl_songsplay_table(spark_session, output_location):
     songsplay_data.write.parquet(output_dir)
 
 
+def run_etl(spark_session, output_location):
+    etl_users_table(spark_session, output_location)
+    etl_artists_table(spark_session, output_location)
+    etl_songs_table(spark_session, output_location)
+    etl_time_table(spark_session, output_location)
+    etl_songsplay_table(spark_session, output_location)
+
+
 def main():
     spark = initiate_session()
     songs_location = ""
     logs_location = ""
-    songs_df, log_df = load_data(spark, songs_location, logs_location)
+    output_dir = ""
+    songs_df, logs_df = load_data(spark, songs_location, logs_location)
+    create_temp_table(songs_df, "song_data")
+    create_temp_table(logs_df, "log_data")
+    run_etl(spark, output_dir)
+
 
 
