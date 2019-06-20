@@ -108,6 +108,39 @@ def etl_time_table(spark_session, output_location):
     time_data.write.parquet(output_dir)
 
 
+def etl_songsplay_table(spark_session, output_location):
+    extract_songsplay_data = """
+    SELECT log_temp.start_time,
+        log_temp.user_id,
+        log_temp.level,
+        song_temp.song_id,
+        song_temp.artist_id,
+        log_temp.session_id,
+        log_temp.location,
+        log_temp.user_agent
+    FROM (SELECT from_unixtime(ts/1000, 'YYYY-MM-dd hh:mm:ss') AS start_time,
+            userId AS user_id,
+            level,
+            song,
+            artist,
+            location,
+            sessionId AS session_id,
+            userAgent AS user_agent
+        FROM log_data) log_temp
+    JOIN
+        (SELECT song_id,
+            artist_id,
+            artist_name,
+            title
+        FROM song_data) song_temp
+    ON log_temp.song = song_temp.title
+    AND log_temp.artist = song_temp.artist_name
+    """
+    songsplay_data = spark_session.sql(extract_songsplay_data)
+    output_dir = os.path.join(output_location, "songsplay.parquet")
+    songsplay_data.write.parquet(output_dir)
+
+
 def main():
     spark = initiate_session()
     songs_location = ""
