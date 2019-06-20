@@ -71,7 +71,7 @@ def etl_users_table(spark_session, output_location):
     FROM log_data
     """
     users_data = spark_session.sql(extract_user_data)
-    output_dir = os.path.join(output_location, "songs.parquet")
+    output_dir = os.path.join(output_location, "users.parquet")
     users_data.write.parquet(output_dir)
 
 
