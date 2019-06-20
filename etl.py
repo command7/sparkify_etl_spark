@@ -89,6 +89,25 @@ def etl_artists_table(spark_session, output_location):
     artists_data.write.parquet(output_dir)
 
 
+def etl_time_table(spark_session, output_location):
+    extract_time_data = """
+    SELECT t1.timestamp AS start_time,
+        hour(t1.timestamp) AS hour,
+        dayofmonth(t1.timestamp) AS day,
+        weekofyear(t1.timestamp) AS week,
+        month(t1.timestamp) AS month,
+        year(t1.timestamp) AS year,
+        CASE WHEN dayofweek(t1.timestamp) IN (6, 7) THEN True ELSE False END AS 
+        weekday
+    FROM 
+        (SELECT from_unixtime(ts/1000, 'YYYY-MM-dd hh:mm:ss') AS timestamp 
+        FROM log_data) t1
+    """
+    time_data = spark_session.sql(extract_time_data)
+    output_dir = os.path.join(output_location, "time.parquet")
+    time_data.write.parquet(output_dir)
+
+
 def main():
     spark = initiate_session()
     songs_location = ""
