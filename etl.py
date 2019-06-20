@@ -72,7 +72,7 @@ def etl_users_table(spark_session, output_location):
     """
     users_data = spark_session.sql(extract_user_data)
     output_dir = os.path.join(output_location, "songs.parquet")
-    song_data.write.parquet(output_dir)
+    users_data.write.parquet(output_dir)
 
 
 def main():
