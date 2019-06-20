@@ -61,6 +61,20 @@ def etl_songs_table(spark_session, output_location):
     song_data.write.parquet(output_dir)
 
 
+def etl_users_table(spark_session, output_location):
+    extract_user_data = """
+    SELECT DISTINCT userId AS user_id,
+        firstName AS first_name,
+        lastName AS last_name,
+        gender,
+        level
+    FROM log_data
+    """
+    users_data = spark_session.sql(extract_user_data)
+    output_dir = os.path.join(output_location, "songs.parquet")
+    song_data.write.parquet(output_dir)
+
+
 def main():
     spark = initiate_session()
     songs_location = ""
