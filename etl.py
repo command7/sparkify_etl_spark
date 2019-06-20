@@ -47,7 +47,7 @@ def create_temp_table(data_frame, table_name):
     data_frame.createOrReplaceTempView(table_name)
 
 
-def etl_songs_table(spark_session, songs_df, output_location):
+def etl_songs_table(spark_session, output_location):
     extract_song_data = """
     SELECT DISTINCT song_id,
         title,
@@ -58,11 +58,7 @@ def etl_songs_table(spark_session, songs_df, output_location):
     """
     song_data = spark_session.sql(extract_song_data)
     output_dir = os.path.join(output_location, "songs.parquet")
-    song_data.write.parquet(output_location)
-
-
-def etl_users_table(spark_session, )
-    pass
+    song_data.write.parquet(output_dir)
 
 
 def main():
