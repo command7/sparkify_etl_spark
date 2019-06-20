@@ -27,6 +27,22 @@ def initiate_session():
     return spark
 
 
+def load_songs_data(spark_session, input_location):
+    songs_df = spark_session.read.json(input_location)
+    return songs_df
+
+
+def load_log_data(spark_session, input_location):
+    logs_df = spark_session.read.json(input_location)
+    return logs_df
+
+
+def load_data(spark_session, songs_location, logs_location):
+    songs_df = load_songs_data(spark_session, songs_location)
+    logs_df = load_log_data(spark_session, logs_location)
+    return songs_df, logs_df
+
+
 def create_temp_table(data_frame, table_name):
     data_frame.createOrReplaceTempView(table_name)
 
@@ -40,7 +56,19 @@ def etl_songs_table(spark_session, songs_df, output_location):
         duration
     FROM song_data
     """
-    song_data = spark.sql(extract_song_data)
+    song_data = spark_session.sql(extract_song_data)
     output_dir = os.path.join(output_location, "songs.parquet")
     song_data.write.parquet(output_location)
+
+
+def etl_users_table(spark_session, )
+    pass
+
+
+def main():
+    spark = initiate_session()
+    songs_location = ""
+    logs_location = ""
+    songs_df, log_df = load_data(spark, songs_location, logs_location)
+
 
