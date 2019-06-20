@@ -17,3 +17,12 @@ song_data = spark.read.json(path='song_data/*/*/*/*.json')
 log_data.show()
 song_data.show()
 
+def initiate_session():
+    spark = SparkSession.builder\
+        .config("spark.jars.packages",
+                "org.apache.hadoop:hadoop-aws:2.7.0")\
+        .getOrCreate()
+    return spark
+
+
+
