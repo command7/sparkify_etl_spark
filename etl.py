@@ -75,6 +75,20 @@ def etl_users_table(spark_session, output_location):
     users_data.write.parquet(output_dir)
 
 
+def etl_artists_table(spark_session, output_location):
+    extract_artists_data = """
+    SELECT DISTINCT artist_id,
+        artist_name AS name,
+        artist_location AS location,
+        artist_latitude AS lattitude,
+        artist_longitude AS longitude
+    FROM song_data
+    """
+    artists_data = spark_session.sql(extract_artists_data)
+    output_dir = os.path.join(output_location, "artists.parquet")
+    artists_data.write.parquet(output_dir)
+
+
 def main():
     spark = initiate_session()
     songs_location = ""
