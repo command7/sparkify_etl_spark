@@ -60,6 +60,7 @@ def etl_songs_table(spark_session, output_location):
     song_data = spark_session.sql(extract_song_data)
     output_dir = os.path.join(output_location, "songs.parquet")
     song_data.write.parquet(output_dir)
+    print("Songs ETL Completed.")
 
 
 def etl_users_table(spark_session, output_location):
@@ -74,6 +75,7 @@ def etl_users_table(spark_session, output_location):
     users_data = spark_session.sql(extract_user_data)
     output_dir = os.path.join(output_location, "users.parquet")
     users_data.write.parquet(output_dir)
+    print("Users ETL Completed.")
 
 
 def etl_artists_table(spark_session, output_location):
@@ -88,6 +90,7 @@ def etl_artists_table(spark_session, output_location):
     artists_data = spark_session.sql(extract_artists_data)
     output_dir = os.path.join(output_location, "artists.parquet")
     artists_data.write.parquet(output_dir)
+    print("Artists ETL Completed.")
 
 
 def etl_time_table(spark_session, output_location):
@@ -107,6 +110,7 @@ def etl_time_table(spark_session, output_location):
     time_data = spark_session.sql(extract_time_data)
     output_dir = os.path.join(output_location, "time.parquet")
     time_data.write.parquet(output_dir)
+    print("Time ETL Completed.")
 
 
 def etl_songsplay_table(spark_session, output_location):
@@ -141,8 +145,8 @@ def etl_songsplay_table(spark_session, output_location):
     """
     songsplay_data = spark_session.sql(extract_songsplay_data)
     output_dir = os.path.join(output_location, "songsplay.parquet")
-    print(songsplay_data.show(5, truncate=False))
     songsplay_data.write.parquet(output_dir)
+    print("Songs play ETL Completed.")
 
 
 def run_etl(spark_session, output_location):
