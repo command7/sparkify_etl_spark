@@ -4,6 +4,10 @@ import os
 
 
 def initiate_session():
+    """
+    Create or obtain an existing Spark Session
+    :return: Spark Session
+    """
     spark = SparkSession.builder\
         .config("spark.jars.packages",
                 "org.apache.hadoop:hadoop-aws:2.7.6")\
@@ -13,26 +17,58 @@ def initiate_session():
 
 
 def load_songs_data(spark_session, input_location):
+    """
+    Read songs data from JSON files stored in AWS s3
+    :param spark_session: Active Spark Session
+    :param input_location: S3 link to data
+    :return: Data frame with songs data
+    """
     songs_df = spark_session.read.json(input_location)
     return songs_df
 
 
 def load_log_data(spark_session, input_location):
+    """
+        Read log data from JSON files stored in AWS s3
+        :param spark_session: Active Spark Session
+        :param input_location: S3 link to data
+        :return: Data frame with log data
+        """
     logs_df = spark_session.read.json(input_location)
     return logs_df
 
 
 def load_data(spark_session, songs_location, logs_location):
+    """
+    Load songs and log data from JSON files stored in AWS S3
+    :param spark_session: Active Spark Session
+    :param songs_location: S3 link to song JSON files
+    :param logs_location: S3 link to log JSON files
+    :return: Songs Data frame, Log Data frame
+    """
     songs_df = load_songs_data(spark_session, songs_location)
     logs_df = load_log_data(spark_session, logs_location)
     return songs_df, logs_df
 
 
 def create_temp_table(data_frame, table_name):
+    """
+    Create or Replace Temporary table from Data frame for spark SQL
+    :param data_frame: Data Frame of which a temp table should be created
+    :param table_name: Name of the temp table
+    :return: None
+    """
     data_frame.createOrReplaceTempView(table_name)
 
 
 def etl_songs_table(spark_session, output_location):
+    """
+    Extract songs table data from JSON files, transform, write it as parquet
+    files to output location specified.
+    :param spark_session: Active Spark Session
+    :param output_location: Directory to where transformed should be written to
+    :return: None
+    """
     print("Initiating ETL for Songs table.")
     extract_song_data = """
     SELECT DISTINCT song_id,
@@ -49,6 +85,15 @@ def etl_songs_table(spark_session, output_location):
 
 
 def etl_users_table(spark_session, output_location):
+    """
+        Extract users table data from JSON files, transform, write it as
+        parquet
+        files to output location specified.
+        :param spark_session: Active Spark Session
+        :param output_location: Directory to where transformed should be
+        written to
+        :return: None
+        """
     print("Initiating ETL for Users table.")
     extract_user_data = """
     SELECT DISTINCT userId AS user_id,
@@ -65,6 +110,15 @@ def etl_users_table(spark_session, output_location):
 
 
 def etl_artists_table(spark_session, output_location):
+    """
+        Extract artists table data from JSON files, transform, write it as
+        parquet
+        files to output location specified.
+        :param spark_session: Active Spark Session
+        :param output_location: Directory to where transformed should be
+        written to
+        :return: None
+        """
     print("Initiating ETL for Artists table.")
     extract_artists_data = """
     SELECT DISTINCT artist_id,
@@ -81,6 +135,14 @@ def etl_artists_table(spark_session, output_location):
 
 
 def etl_time_table(spark_session, output_location):
+    """
+        Extract time table data from JSON files, transform, write it as parquet
+        files to output location specified.
+        :param spark_session: Active Spark Session
+        :param output_location: Directory to where transformed should be
+        written to
+        :return: None
+        """
     print("Initiating ETL for Time table.")
     extract_time_data = """
     SELECT CAST(t1.timestamp_temp AS TIMESTAMP) AS start_time,
@@ -104,6 +166,15 @@ def etl_time_table(spark_session, output_location):
 
 
 def etl_songsplay_table(spark_session, output_location):
+    """
+        Extract songsplay table data from JSON files, transform, write it as
+        parquet
+        files to output location specified.
+        :param spark_session: Active Spark Session
+        :param output_location: Directory to where transformed should be
+        written to
+        :return: None
+        """
     print("Initiating ETL for SongsPlay table.")
     extract_songsplay_data = """
     SELECT CONCAT(log_temp.ts, log_temp.user_id) AS songplay_id,
@@ -141,6 +212,12 @@ def etl_songsplay_table(spark_session, output_location):
 
 
 def run_etl(spark_session, output_location):
+    """
+    Run ETL Workflows Sequentially
+    :param spark_session: Active Spark Session
+    :param output_location: Directory to where transformed should be written to
+    :return:
+    """
     print("Initiating ETL Workflow")
     etl_users_table(spark_session, output_location)
     # etl_artists_table(spark_session, output_location)
@@ -151,6 +228,15 @@ def run_etl(spark_session, output_location):
 
 
 def main():
+    """
+    Load credentials from credentials.cfg using config parser.
+    Create Spark Session
+    Load data stored in JSON files from S3
+    Perform ETL work flows on data and store transformed data as parquet
+    files to S3 bucket.
+    End spark session
+    :return: None
+    """
     conf_parser = configparser.ConfigParser()
     conf_parser.read_file(open("aws/credentials.cfg", "r"))
     AWS_ACCESS_KEY_ID = conf_parser['AWS']['AWS_ACCESS_KEY']
