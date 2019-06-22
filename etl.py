@@ -2,22 +2,6 @@ import configparser
 from pyspark.sql import SparkSession
 import os
 
-# conf_parser = configparser.ConfigParser()
-# with open('etl_config.cfg', 'r') as config_file:
-#     conf_parser.read_file(config_file)
-#
-# aws_access = conf_parser['AWS']['AWS_ACCESS_KEY']
-# aws_secret = conf_parser['AWS']['AWS_SECRET_KEY']
-#
-# spark = SparkSession.builder.config("spark.jars.packages",
-#                                     "org.apache.hadoop:hadoop-aws:2.7.0")\
-#     .getOrCreate()
-#
-# log_data = spark.read.json(path='log-data/*')
-# song_data = spark.read.json(path='song_data/*/*/*/*.json')
-# log_data.show()
-# song_data.show()
-
 
 def initiate_session():
     spark = SparkSession.builder\
@@ -95,16 +79,18 @@ def etl_artists_table(spark_session, output_location):
 
 def etl_time_table(spark_session, output_location):
     extract_time_data = """
-    SELECT t1.timestamp AS start_time,
-        hour(t1.timestamp) AS hour,
-        dayofmonth(t1.timestamp) AS day,
-        weekofyear(t1.timestamp) AS week,
-        month(t1.timestamp) AS month,
-        year(t1.timestamp) AS year,
-        CASE WHEN dayofweek(t1.timestamp) IN (6, 7) THEN True ELSE False END AS 
+    SELECT CAST(t1.timestamp_temp AS TIMESTAMP) AS start_time,
+        hour(t1.timestamp_temp) AS hour,
+        dayofmonth(t1.timestamp_temp) AS day,
+        weekofyear(t1.timestamp_temp) AS week,
+        month(t1.timestamp_temp) AS month,
+        year(t1.timestamp_temp) AS year,
+        CASE WHEN dayofweek(t1.timestamp_temp) IN (6, 7) THEN True ELSE False 
+        END AS 
         weekday
     FROM 
-        (SELECT from_unixtime(ts/1000, 'YYYY-MM-dd hh:mm:ss') AS timestamp 
+        (SELECT from_unixtime(ts/1000, 'YYYY-MM-dd hh:mm:ss') AS 
+        timestamp_temp 
         FROM log_data) t1
     """
     time_data = spark_session.sql(extract_time_data)
@@ -116,7 +102,7 @@ def etl_time_table(spark_session, output_location):
 def etl_songsplay_table(spark_session, output_location):
     extract_songsplay_data = """
     SELECT concat(log_temp.ts, log_temp.user_id) AS songplay_id,
-        log_temp.start_time,
+        cast(log_temp.start_time AS TIMESTAMP) AS start_time,
         log_temp.user_id,
         log_temp.level,
         song_temp.song_id,
@@ -160,13 +146,13 @@ def run_etl(spark_session, output_location):
 def main():
     conf_parser = configparser.ConfigParser()
     conf_parser.read_file(open("aws/credentials.cfg", "r"))
-    os.environ['AWS_ACCESS_KEY_ID'] = conf_parser['AWS']['AWS_ACCESS_KEY']
-    os.environ['AWS_SECRET_ACCESS_KEY'] = conf_parser['AWS']['AWS_SECRET_KEY']
+    AWS_ACCESS_KEY_ID = conf_parser['AWS']['AWS_ACCESS_KEY']
+    AWS_SECRET_ACCESS_KEY = conf_parser['AWS']['AWS_SECRET_KEY']
     spark = initiate_session()
     spark.sparkContext._jsc.hadoopConfiguration().set("fs.s3a.access.key",
-                                                      'AKIA2ITTLRCLMQZGWERC')
+                                                      AWS_ACCESS_KEY_ID)
     spark.sparkContext._jsc.hadoopConfiguration().set("fs.s3a.secret.key",
-                                                      'i1kwc7gNyaTAx0tBlQq/g0+vaOMaySB4ufc3tJo/')
+                                                      AWS_SECRET_ACCESS_KEY)
     songs_location = "song_data/*/*/*/*.json"
     logs_location = "log-data/*"
     output_dir = conf_parser["AWS"]["OUTPUT_PATH"]
