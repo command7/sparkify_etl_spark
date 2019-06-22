@@ -33,6 +33,7 @@ def create_temp_table(data_frame, table_name):
 
 
 def etl_songs_table(spark_session, output_location):
+    print("Initiating ETL for Songs table.")
     extract_song_data = """
     SELECT DISTINCT song_id,
         title,
@@ -48,6 +49,7 @@ def etl_songs_table(spark_session, output_location):
 
 
 def etl_users_table(spark_session, output_location):
+    print("Initiating ETL for Users table.")
     extract_user_data = """
     SELECT DISTINCT userId AS user_id,
         firstName AS first_name,
@@ -63,6 +65,7 @@ def etl_users_table(spark_session, output_location):
 
 
 def etl_artists_table(spark_session, output_location):
+    print("Initiating ETL for Artists table.")
     extract_artists_data = """
     SELECT DISTINCT artist_id,
         artist_name AS name,
@@ -78,6 +81,7 @@ def etl_artists_table(spark_session, output_location):
 
 
 def etl_time_table(spark_session, output_location):
+    print("Initiating ETL for Time table.")
     extract_time_data = """
     SELECT CAST(t1.timestamp_temp AS TIMESTAMP) AS start_time,
         HOUR(t1.timestamp_temp) AS hour,
@@ -100,6 +104,7 @@ def etl_time_table(spark_session, output_location):
 
 
 def etl_songsplay_table(spark_session, output_location):
+    print("Initiating ETL for SongsPlay table.")
     extract_songsplay_data = """
     SELECT CONCAT(log_temp.ts, log_temp.user_id) AS songplay_id,
         CAST(log_temp.start_time AS TIMESTAMP) AS start_time,
@@ -136,11 +141,13 @@ def etl_songsplay_table(spark_session, output_location):
 
 
 def run_etl(spark_session, output_location):
+    print("Initiating ETL Workflow")
     etl_users_table(spark_session, output_location)
-    etl_artists_table(spark_session, output_location)
-    etl_songs_table(spark_session, output_location)
-    etl_time_table(spark_session, output_location)
-    etl_songsplay_table(spark_session, output_location)
+    # etl_artists_table(spark_session, output_location)
+    # etl_songs_table(spark_session, output_location)
+    # etl_time_table(spark_session, output_location)
+    # etl_songsplay_table(spark_session, output_location)
+    print("ETL Completed")
 
 
 def main():
@@ -153,15 +160,18 @@ def main():
                                                       AWS_ACCESS_KEY_ID)
     spark.sparkContext._jsc.hadoopConfiguration().set("fs.s3a.secret.key",
                                                       AWS_SECRET_ACCESS_KEY)
-    songs_location = "song_data/*/*/*/*.json"
-    logs_location = "log-data/*"
+    # songs_location = "song_data/*/*/*/*.json"
+    songs_url = conf_parser['AWS']['SONGS_PATH']
+    songs_location = os.path.join(songs_url, "*/*/*/*.json")
+    # logs_location = "log-data/*"
+    logs_url = conf_parser['AWS']["LOGS_PATH"]
+    logs_location = os.path.join(logs_url, "*/*/*.json")
     output_dir = conf_parser["AWS"]["OUTPUT_PATH"]
-    songs_df, logs_df = load_data(spark, songs_location, logs_location)
-    create_temp_table(songs_df, "song_data")
-    create_temp_table(logs_df, "log_data")
     try:
+        songs_df, logs_df = load_data(spark, songs_location, logs_location)
+        create_temp_table(songs_df, "song_data")
+        create_temp_table(logs_df, "log_data")
         run_etl(spark, output_dir)
-        print("ETL Completed")
     except Exception as e:
         print(e)
     finally:
