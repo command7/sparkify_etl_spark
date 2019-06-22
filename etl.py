@@ -22,7 +22,7 @@ import os
 def initiate_session():
     spark = SparkSession.builder\
         .config("spark.jars.packages",
-                "org.apache.hadoop:hadoop-aws:2.7.0")\
+                "org.apache.hadoop:hadoop-aws:2.7.6")\
         .appName("sparkify_etl")\
         .getOrCreate()
     return spark
@@ -111,7 +111,8 @@ def etl_time_table(spark_session, output_location):
 
 def etl_songsplay_table(spark_session, output_location):
     extract_songsplay_data = """
-    SELECT log_temp.start_time,
+    SELECT concat(log_temp.ts, log_temp.user_id) AS songplay_id,
+        log_temp.start_time,
         log_temp.user_id,
         log_temp.level,
         song_temp.song_id,
@@ -120,6 +121,7 @@ def etl_songsplay_table(spark_session, output_location):
         log_temp.location,
         log_temp.user_agent
     FROM (SELECT from_unixtime(ts/1000, 'YYYY-MM-dd hh:mm:ss') AS start_time,
+            ts,
             userId AS user_id,
             level,
             song,
@@ -139,26 +141,42 @@ def etl_songsplay_table(spark_session, output_location):
     """
     songsplay_data = spark_session.sql(extract_songsplay_data)
     output_dir = os.path.join(output_location, "songsplay.parquet")
+    print(songsplay_data.show(5, truncate=False))
     songsplay_data.write.parquet(output_dir)
 
 
 def run_etl(spark_session, output_location):
     etl_users_table(spark_session, output_location)
-    etl_artists_table(spark_session, output_location)
-    etl_songs_table(spark_session, output_location)
-    etl_time_table(spark_session, output_location)
-    etl_songsplay_table(spark_session, output_location)
+    # etl_artists_table(spark_session, output_location)
+    # etl_songs_table(spark_session, output_location)
+    # etl_time_table(spark_session, output_location)
+    # etl_songsplay_table(spark_session, output_location)
 
 
 def main():
+    conf_parser = configparser.ConfigParser()
+    conf_parser.read_file(open("aws/credentials.cfg", "r"))
+    os.environ['AWS_ACCESS_KEY_ID'] = conf_parser['AWS']['AWS_ACCESS_KEY']
+    os.environ['AWS_SECRET_ACCESS_KEY'] = conf_parser['AWS']['AWS_SECRET_KEY']
     spark = initiate_session()
-    songs_location = ""
-    logs_location = ""
-    output_dir = ""
+    spark.sparkContext._jsc.hadoopConfiguration().set("fs.s3a.access.key",
+                                                      'AKIA2ITTLRCLMQZGWERC')
+    spark.sparkContext._jsc.hadoopConfiguration().set("fs.s3a.secret.key",
+                                                      'i1kwc7gNyaTAx0tBlQq/g0+vaOMaySB4ufc3tJo/')
+    songs_location = "song_data/*/*/*/*.json"
+    logs_location = "log-data/*"
+    output_dir = conf_parser["AWS"]["OUTPUT_PATH"]
     songs_df, logs_df = load_data(spark, songs_location, logs_location)
     create_temp_table(songs_df, "song_data")
     create_temp_table(logs_df, "log_data")
-    run_etl(spark, output_dir)
+    try:
+        run_etl(spark, output_dir)
+        print("ETL Completed")
+    except Exception as e:
+        print(e)
+    finally:
+        spark.stop()
 
 
-
+if __name__ == "__main__":
+    main()
