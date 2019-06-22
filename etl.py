@@ -80,16 +80,16 @@ def etl_artists_table(spark_session, output_location):
 def etl_time_table(spark_session, output_location):
     extract_time_data = """
     SELECT CAST(t1.timestamp_temp AS TIMESTAMP) AS start_time,
-        hour(t1.timestamp_temp) AS hour,
-        dayofmonth(t1.timestamp_temp) AS day,
-        weekofyear(t1.timestamp_temp) AS week,
-        month(t1.timestamp_temp) AS month,
-        year(t1.timestamp_temp) AS year,
-        CASE WHEN dayofweek(t1.timestamp_temp) IN (6, 7) THEN True ELSE False 
+        HOUR(t1.timestamp_temp) AS hour,
+        DAYOFMONTH(t1.timestamp_temp) AS day,
+        WEEKOFYEAR(t1.timestamp_temp) AS week,
+        MONTH(t1.timestamp_temp) AS month,
+        YEAR(t1.timestamp_temp) AS year,
+        CASE WHEN DAYOFWEEK(t1.timestamp_temp) IN (6, 7) THEN True ELSE False 
         END AS 
         weekday
     FROM 
-        (SELECT from_unixtime(ts/1000, 'YYYY-MM-dd hh:mm:ss') AS 
+        (SELECT FROM_UNIXTIME(ts/1000, 'YYYY-MM-dd hh:mm:ss') AS 
         timestamp_temp 
         FROM log_data) t1
     """
@@ -101,8 +101,8 @@ def etl_time_table(spark_session, output_location):
 
 def etl_songsplay_table(spark_session, output_location):
     extract_songsplay_data = """
-    SELECT concat(log_temp.ts, log_temp.user_id) AS songplay_id,
-        cast(log_temp.start_time AS TIMESTAMP) AS start_time,
+    SELECT CONCAT(log_temp.ts, log_temp.user_id) AS songplay_id,
+        CAST(log_temp.start_time AS TIMESTAMP) AS start_time,
         log_temp.user_id,
         log_temp.level,
         song_temp.song_id,
@@ -110,7 +110,7 @@ def etl_songsplay_table(spark_session, output_location):
         log_temp.session_id,
         log_temp.location,
         log_temp.user_agent
-    FROM (SELECT from_unixtime(ts/1000, 'YYYY-MM-dd hh:mm:ss') AS start_time,
+    FROM (SELECT FROM_UNIXTIME(ts/1000, 'YYYY-MM-dd hh:mm:ss') AS start_time,
             ts,
             userId AS user_id,
             level,
