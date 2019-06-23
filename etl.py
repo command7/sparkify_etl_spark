@@ -1,6 +1,7 @@
 import configparser
 from pyspark.sql import SparkSession
 import os
+from sys import exit
 
 
 def load_configuration(config_file):
@@ -11,6 +12,7 @@ def load_configuration(config_file):
     :return: None
     """
     # Load info from configuration file
+    print("Loading configuration details.")
     conf_parser = configparser.ConfigParser()
     conf_parser.read_file(open(config_file, "r"))
     aws_access_key = conf_parser['AWS']['AWS_ACCESS_KEY']
@@ -39,6 +41,7 @@ def initiate_session():
                 "org.apache.hadoop:hadoop-aws:2.7.6")\
         .appName("sparkify_etl")\
         .getOrCreate()
+    spark.sparkContext.setLogLevel("Error")
     spark.sparkContext._jsc.hadoopConfiguration().set("fs.s3a.access.key",
                                                       os.environ[
                                                           "AWS_ACCESS_KEY"])
@@ -223,10 +226,10 @@ def run_etl(spark_session, output_location):
     """
     print("Initiating ETL Workflow")
     etl_users_table(spark_session, output_location)
-    etl_artists_table(spark_session, output_location)
-    etl_songs_table(spark_session, output_location)
-    etl_time_table(spark_session, output_location)
-    etl_songsplay_table(spark_session, output_location)
+    # etl_artists_table(spark_session, output_location)
+    # etl_songs_table(spark_session, output_location)
+    # etl_time_table(spark_session, output_location)
+    # etl_songsplay_table(spark_session, output_location)
     print("ETL Completed")
 
 
@@ -265,6 +268,7 @@ def main():
         spark = initiate_session()
     except Exception as e:
         print("Unable to initiate spark session.")
+        exit()
 
     try:
         songs_df, logs_df = load_data(spark,
