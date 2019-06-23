@@ -13,24 +13,7 @@ also stores information about when songs are played, by whom they are played
  bucket, 
  transforms the data into a star schema after denormalizing and stores 
  them as _parquet_ files. 
- 
- ## How to run
- 
- In order to run this program, you need to create an AWS user with 
- privileges to access data from S3 and write data to S3. The `ACCESS KEY` 
- and `SECRET KEY` should be stored in a `.cfg` file at `aws/credentials.cfg'.
- 
- An example of how the config file looks is as follows
- 
- ```
- [AWS]
- AWS_ACCESS_KEY = ABC
-AWS_SECRET_KEY = XYZ
-```
 
-Once credentials are stored in the specified file, you can initiate the ETL 
-workflow by using
-`python3 etl.py`
 
 ## Initial Structure of Data
 ### Songs JSON Schema
@@ -69,3 +52,26 @@ artist_id, name, location, lattitude, longitude
 * time - timestamps of records in songplays broken down into specific units
 start_time, hour, day, week, month, year, weekday
 
+## How to run
+ 
+ In order to run this program, you need to create an AWS user with 
+ privileges to access data from S3 and write data to S3. The `ACCESS KEY` 
+ and `SECRET KEY` should be stored in a `.cfg` file at `aws/credentials.cfg'.
+ 
+ An example of how the config file looks is as follows
+ 
+ ```
+ [AWS]
+ AWS_ACCESS_KEY = ABC
+AWS_SECRET_KEY = XYZ
+```
+
+Along with your AWS credentials, the location to which (S3 bucket URL) your 
+output (parquet files) should be stored should also be specified in the 
+configuration file.
+`OUTPUT_PATH = s3a://etlxtyz`
+
+Once credentials and output directory are stored in the specified file, you 
+can initiate the ETL 
+workflow by using
+`python3 etl.py`

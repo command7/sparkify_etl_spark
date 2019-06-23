@@ -220,10 +220,10 @@ def run_etl(spark_session, output_location):
     """
     print("Initiating ETL Workflow")
     etl_users_table(spark_session, output_location)
-    # etl_artists_table(spark_session, output_location)
-    # etl_songs_table(spark_session, output_location)
-    # etl_time_table(spark_session, output_location)
-    # etl_songsplay_table(spark_session, output_location)
+    etl_artists_table(spark_session, output_location)
+    etl_songs_table(spark_session, output_location)
+    etl_time_table(spark_session, output_location)
+    etl_songsplay_table(spark_session, output_location)
     print("ETL Completed")
 
 
