@@ -230,6 +230,15 @@ def run_etl(spark_session, output_location):
     print("ETL Completed")
 
 
+def cleanup(spark_session):
+    spark_session.stop()
+    os.environ.pop("AWS_ACCESS_KEY")
+    os.environ.pop("AWS_SECRET_KEY")
+    os.environ.pop("songs_location")
+    os.environ.pop("logs_location")
+    os.environ.pop("output_dir")
+
+
 def main():
     """
     Load credentials from credentials.cfg using config parser.
@@ -251,7 +260,7 @@ def main():
     except Exception as e:
         print(e)
     finally:
-        spark.stop()
+        cleanup(spark)
 
 
 if __name__ == "__main__":
