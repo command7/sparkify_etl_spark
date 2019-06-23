@@ -69,6 +69,7 @@ AWS_SECRET_KEY = XYZ
 Along with your AWS credentials, the location to which (S3 bucket URL) your 
 output (parquet files) should be stored should also be specified in the 
 configuration file.
+
 `OUTPUT_PATH = s3a://etlxtyz`
 
 Once credentials and output directory are stored in the specified file, you 

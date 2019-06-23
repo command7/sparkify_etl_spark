@@ -16,49 +16,19 @@ def initiate_session():
     return spark
 
 
-def load_songs_data(spark_session, input_location):
+def load_data(spark_session, songs_location, logs_location):
     """
     Read songs data from JSON files stored in AWS s3
     :param spark_session: Active Spark Session
-    :param input_location: S3 link to data
-    :return: Data frame with songs data
+    :param songs_location: S3 link to song data
+    :param logs_location: S3 link to log data
+    :return: Data frame with songs data, Data frame with log data
     """
-    songs_df = spark_session.read.json(input_location)
-    return songs_df
-
-
-def load_log_data(spark_session, input_location):
-    """
-        Read log data from JSON files stored in AWS s3
-        :param spark_session: Active Spark Session
-        :param input_location: S3 link to data
-        :return: Data frame with log data
-        """
-    logs_df = spark_session.read.json(input_location)
-    return logs_df
-
-
-def load_data(spark_session, songs_location, logs_location):
-    """
-    Load songs and log data from JSON files stored in AWS S3
-    :param spark_session: Active Spark Session
-    :param songs_location: S3 link to song JSON files
-    :param logs_location: S3 link to log JSON files
-    :return: Songs Data frame, Log Data frame
-    """
-    songs_df = load_songs_data(spark_session, songs_location)
-    logs_df = load_log_data(spark_session, logs_location)
+    songs_df = spark_session.read.json(songs_location)
+    logs_df = spark_session.read.json(logs_location)
+    songs_df.createOrReplaceTempView("song_data")
+    logs_df.createOrReplaceTempView("log_data")
     return songs_df, logs_df
-
-
-def create_temp_table(data_frame, table_name):
-    """
-    Create or Replace Temporary table from Data frame for spark SQL
-    :param data_frame: Data Frame of which a temp table should be created
-    :param table_name: Name of the temp table
-    :return: None
-    """
-    data_frame.createOrReplaceTempView(table_name)
 
 
 def etl_songs_table(spark_session, output_location):
@@ -213,7 +183,7 @@ def etl_songsplay_table(spark_session, output_location):
 
 def run_etl(spark_session, output_location):
     """
-    Run ETL Workflows Sequentially
+    Run ETL pipelines Sequentially
     :param spark_session: Active Spark Session
     :param output_location: Directory to where transformed should be written to
     :return:
@@ -246,17 +216,13 @@ def main():
                                                       AWS_ACCESS_KEY_ID)
     spark.sparkContext._jsc.hadoopConfiguration().set("fs.s3a.secret.key",
                                                       AWS_SECRET_ACCESS_KEY)
-    # songs_location = "song_data/*/*/*/*.json"
     songs_url = conf_parser['AWS']['SONGS_PATH']
     songs_location = os.path.join(songs_url, "*/*/*/*.json")
-    # logs_location = "log-data/*"
     logs_url = conf_parser['AWS']["LOGS_PATH"]
     logs_location = os.path.join(logs_url, "*/*/*.json")
     output_dir = conf_parser["AWS"]["OUTPUT_PATH"]
     try:
         songs_df, logs_df = load_data(spark, songs_location, logs_location)
-        create_temp_table(songs_df, "song_data")
-        create_temp_table(logs_df, "log_data")
         run_etl(spark, output_dir)
     except Exception as e:
         print(e)
