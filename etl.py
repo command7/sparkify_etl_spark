@@ -4,6 +4,12 @@ import os
 
 
 def load_configuration(config_file):
+    """
+    Load aws credentials and location details from config file
+    Set them to environment variables.
+    :param config_file: Path to config file
+    :return: None
+    """
     # Load info from configuration file
     conf_parser = configparser.ConfigParser()
     conf_parser.read_file(open(config_file, "r"))
