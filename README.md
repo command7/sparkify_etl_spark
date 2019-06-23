@@ -48,7 +48,7 @@ workflow by using
 
 ### Log JSON Schema 
 
-[[https://github.com/username/repository/blob/master/img/octocat.png|alt=octocat]]
+![Image](https://github.com/command7/sparkify_etl_spark/blob/master/Images/log-data.png)
 
 ## Star Schema
 
