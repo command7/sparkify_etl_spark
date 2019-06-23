@@ -3,6 +3,26 @@ from pyspark.sql import SparkSession
 import os
 
 
+def load_configuration(config_file):
+    # Load info from configuration file
+    conf_parser = configparser.ConfigParser()
+    conf_parser.read_file(open(config_file, "r"))
+    aws_access_key = conf_parser['AWS']['AWS_ACCESS_KEY']
+    aws_secret_key = conf_parser['AWS']['AWS_SECRET_KEY']
+    songs_url = conf_parser['AWS']['SONGS_PATH']
+    songs_location = os.path.join(songs_url, "*/*/*/*.json")
+    logs_url = conf_parser['AWS']["LOGS_PATH"]
+    logs_location = os.path.join(logs_url, "*/*/*.json")
+    output_dir = conf_parser["AWS"]["OUTPUT_PATH"]
+
+    # Assign info to environment variables
+    os.environ["AWS_ACCESS_KEY"] = aws_access_key
+    os.environ["AWS_SECRET_KEY"] = aws_secret_key
+    os.environ["songs_location"] = songs_location
+    os.environ["logs_location"] = logs_location
+    os.environ["output_dir"] = output_dir
+    print("Configurations loaded successfully.")
+
 def initiate_session():
     """
     Create or obtain an existing Spark Session
@@ -13,6 +33,13 @@ def initiate_session():
                 "org.apache.hadoop:hadoop-aws:2.7.6")\
         .appName("sparkify_etl")\
         .getOrCreate()
+    spark.sparkContext._jsc.hadoopConfiguration().set("fs.s3a.access.key",
+                                                      os.environ[
+                                                          "AWS_ACCESS_KEY"])
+    spark.sparkContext._jsc.hadoopConfiguration().set("fs.s3a.secret.key",
+                                                      os.environ[
+                                                          "AWS_SECRET_KEY"])
+    print("Spark session created successfully.")
     return spark
 
 
@@ -207,23 +234,14 @@ def main():
     End spark session
     :return: None
     """
-    conf_parser = configparser.ConfigParser()
-    conf_parser.read_file(open("aws/credentials.cfg", "r"))
-    AWS_ACCESS_KEY_ID = conf_parser['AWS']['AWS_ACCESS_KEY']
-    AWS_SECRET_ACCESS_KEY = conf_parser['AWS']['AWS_SECRET_KEY']
+    load_configuration("aws/credentials.cfg")
     spark = initiate_session()
-    spark.sparkContext._jsc.hadoopConfiguration().set("fs.s3a.access.key",
-                                                      AWS_ACCESS_KEY_ID)
-    spark.sparkContext._jsc.hadoopConfiguration().set("fs.s3a.secret.key",
-                                                      AWS_SECRET_ACCESS_KEY)
-    songs_url = conf_parser['AWS']['SONGS_PATH']
-    songs_location = os.path.join(songs_url, "*/*/*/*.json")
-    logs_url = conf_parser['AWS']["LOGS_PATH"]
-    logs_location = os.path.join(logs_url, "*/*/*.json")
-    output_dir = conf_parser["AWS"]["OUTPUT_PATH"]
     try:
-        songs_df, logs_df = load_data(spark, songs_location, logs_location)
-        run_etl(spark, output_dir)
+        songs_df, logs_df = load_data(spark,
+                                      os.environ["songs_location"],
+                                      os.environ["logs_location"])
+        run_etl(spark,
+                os.environ["output_dir"])
     except Exception as e:
         print(e)
     finally:
