@@ -249,8 +249,14 @@ def main():
     End spark session
     :return: None
     """
-    load_configuration("aws/credentials.cfg")
-    spark = initiate_session()
+    try:
+        load_configuration("aws/credentials.cfg")
+    except Exception as e:
+        print("Unable to load configuration data.")
+    try:
+        spark = initiate_session()
+    except Exception as e:
+        print("Unable to initiate spark session.")
     try:
         songs_df, logs_df = load_data(spark,
                                       os.environ["songs_location"],
