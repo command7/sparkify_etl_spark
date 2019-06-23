@@ -231,12 +231,19 @@ def run_etl(spark_session, output_location):
 
 
 def cleanup(spark_session):
+    """
+    Stop spark session and remove environment variables created
+    :param spark_session: Active spark session
+    :return: None
+    """
     spark_session.stop()
     os.environ.pop("AWS_ACCESS_KEY")
     os.environ.pop("AWS_SECRET_KEY")
     os.environ.pop("songs_location")
     os.environ.pop("logs_location")
     os.environ.pop("output_dir")
+    print("Successfully stopped spark session and removed environment "
+          "variables")
 
 
 def main():
@@ -253,10 +260,12 @@ def main():
         load_configuration("aws/credentials.cfg")
     except Exception as e:
         print("Unable to load configuration data.")
+
     try:
         spark = initiate_session()
     except Exception as e:
         print("Unable to initiate spark session.")
+
     try:
         songs_df, logs_df = load_data(spark,
                                       os.environ["songs_location"],
