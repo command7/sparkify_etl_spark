@@ -2,6 +2,7 @@ import configparser
 from pyspark.sql import SparkSession
 import os
 from sys import exit
+import logging
 
 
 def load_configuration(config_file):
@@ -12,7 +13,7 @@ def load_configuration(config_file):
     :return: None
     """
     # Load info from configuration file
-    print("Loading configuration details.")
+    logging.info("Loading configuration details.")
     conf_parser = configparser.ConfigParser()
     conf_parser.read_file(open(config_file, "r"))
     aws_access_key = conf_parser['AWS']['AWS_ACCESS_KEY']
@@ -20,7 +21,8 @@ def load_configuration(config_file):
     songs_url = conf_parser['AWS']['SONGS_PATH']
     songs_location = os.path.join(songs_url, "*/*/*/*.json")
     logs_url = conf_parser['AWS']["LOGS_PATH"]
-    logs_location = os.path.join(logs_url, "*/*/*.json")
+    logs_location = os.path.join(logs_url, "*.json")
+    # logs_location = os.path.join(logs_url, "*/*/*.json")
     output_dir = conf_parser["AWS"]["OUTPUT_PATH"]
 
     # Assign info to environment variables
@@ -29,13 +31,14 @@ def load_configuration(config_file):
     os.environ["songs_location"] = songs_location
     os.environ["logs_location"] = logs_location
     os.environ["output_dir"] = output_dir
-    print("Configurations loaded successfully.")
+    logging.info("Configurations loaded successfully.")
 
 def initiate_session():
     """
     Create or obtain an existing Spark Session
     :return: Spark Session
     """
+    logging.info("Creating Spark session")
     spark = SparkSession.builder\
         .config("spark.jars.packages",
                 "org.apache.hadoop:hadoop-aws:2.7.6")\
@@ -48,7 +51,7 @@ def initiate_session():
     spark.sparkContext._jsc.hadoopConfiguration().set("fs.s3a.secret.key",
                                                       os.environ[
                                                           "AWS_SECRET_KEY"])
-    print("Spark session created successfully.")
+    logging.info("Spark session created successfully.")
     return spark
 
 
@@ -75,7 +78,7 @@ def etl_songs_table(spark_session, output_location):
     :param output_location: Directory to where transformed should be written to
     :return: None
     """
-    print("Initiating ETL for Songs table.")
+    logging.info("Initiating ETL for Songs table.")
     extract_song_data = """
     SELECT DISTINCT song_id,
         title,
@@ -87,7 +90,7 @@ def etl_songs_table(spark_session, output_location):
     song_data = spark_session.sql(extract_song_data)
     output_dir = os.path.join(output_location, "songs.parquet")
     song_data.write.parquet(output_dir)
-    print("Songs ETL Completed.")
+    logging.info("Songs ETL Completed.")
 
 
 def etl_users_table(spark_session, output_location):
@@ -100,7 +103,7 @@ def etl_users_table(spark_session, output_location):
         written to
         :return: None
         """
-    print("Initiating ETL for Users table.")
+    logging.info("Initiating ETL for Users table.")
     extract_user_data = """
     SELECT DISTINCT userId AS user_id,
         firstName AS first_name,
@@ -112,7 +115,7 @@ def etl_users_table(spark_session, output_location):
     users_data = spark_session.sql(extract_user_data)
     output_dir = os.path.join(output_location, "users.parquet")
     users_data.write.parquet(output_dir)
-    print("Users ETL Completed.")
+    logging.info("Users ETL Completed.")
 
 
 def etl_artists_table(spark_session, output_location):
@@ -125,7 +128,7 @@ def etl_artists_table(spark_session, output_location):
         written to
         :return: None
         """
-    print("Initiating ETL for Artists table.")
+    logging.info("Initiating ETL for Artists table.")
     extract_artists_data = """
     SELECT DISTINCT artist_id,
         artist_name AS name,
@@ -137,7 +140,7 @@ def etl_artists_table(spark_session, output_location):
     artists_data = spark_session.sql(extract_artists_data)
     output_dir = os.path.join(output_location, "artists.parquet")
     artists_data.write.parquet(output_dir)
-    print("Artists ETL Completed.")
+    logging.info("Artists ETL Completed.")
 
 
 def etl_time_table(spark_session, output_location):
@@ -149,7 +152,7 @@ def etl_time_table(spark_session, output_location):
         written to
         :return: None
         """
-    print("Initiating ETL for Time table.")
+    logging.info("Initiating ETL for Time table.")
     extract_time_data = """
     SELECT CAST(t1.timestamp_temp AS 
     TIMESTAMP) AS start_time,
@@ -169,7 +172,7 @@ def etl_time_table(spark_session, output_location):
     time_data = spark_session.sql(extract_time_data)
     output_dir = os.path.join(output_location, "time.parquet")
     time_data.write.parquet(output_dir)
-    print("Time ETL Completed.")
+    logging.info("Time ETL Completed.")
 
 
 def etl_songsplay_table(spark_session, output_location):
@@ -182,7 +185,7 @@ def etl_songsplay_table(spark_session, output_location):
         written to
         :return: None
         """
-    print("Initiating ETL for SongsPlay table.")
+    logging.info("Initiating ETL for SongsPlay table.")
     extract_songsplay_data = """
         SELECT monotonically_increasing_id() AS songplay_id,
             CAST(log_temp.start_time AS TIMESTAMP) AS start_time,
@@ -215,7 +218,7 @@ def etl_songsplay_table(spark_session, output_location):
     songsplay_data = spark_session.sql(extract_songsplay_data)
     output_dir = os.path.join(output_location, "songsplay.parquet")
     songsplay_data.write.parquet(output_dir)
-    print("Songs play ETL Completed.")
+    logging.info("Songs play ETL Completed.")
 
 
 def run_etl(spark_session, output_location):
@@ -225,13 +228,13 @@ def run_etl(spark_session, output_location):
     :param output_location: Directory to where transformed should be written to
     :return:
     """
-    print("Initiating ETL Workflow")
+    logging.info("Initiating ETL Workflow")
     etl_users_table(spark_session, output_location)
     etl_artists_table(spark_session, output_location)
     etl_songs_table(spark_session, output_location)
     etl_time_table(spark_session, output_location)
     etl_songsplay_table(spark_session, output_location)
-    print("ETL Completed")
+    logging.info("ETL Completed")
 
 
 def cleanup(spark_session):
@@ -240,13 +243,14 @@ def cleanup(spark_session):
     :param spark_session: Active spark session
     :return: None
     """
+    logging.info("Cleanup Initiated")
     spark_session.stop()
     os.environ.pop("AWS_ACCESS_KEY")
     os.environ.pop("AWS_SECRET_KEY")
     os.environ.pop("songs_location")
     os.environ.pop("logs_location")
     os.environ.pop("output_dir")
-    print("Successfully stopped spark session and removed environment "
+    logging.info("Successfully stopped spark session and removed environment "
           "variables")
 
 
@@ -284,5 +288,11 @@ def main():
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO,
+                        filename='etl.log',
+                        filemode='w',
+                        format='%(asctime)s - %(levelname)s - %('
+                               'message)s',
+                        datefmt='%d-%b-%y %HL%M:%S')
     main()
 
