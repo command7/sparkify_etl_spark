@@ -130,7 +130,7 @@ def etl_artists_table(spark_session, output_location):
     SELECT DISTINCT artist_id,
         artist_name AS name,
         artist_location AS location,
-        artist_latitude AS lattitude,
+        artist_latitude AS latitude,
         artist_longitude AS longitude
     FROM song_data
     """
@@ -151,7 +151,8 @@ def etl_time_table(spark_session, output_location):
         """
     print("Initiating ETL for Time table.")
     extract_time_data = """
-    SELECT CAST(t1.timestamp_temp AS TIMESTAMP) AS start_time,
+    SELECT CAST(t1.timestamp_temp AS 
+    TIMESTAMP) AS start_time,
         HOUR(t1.timestamp_temp) AS hour,
         DAYOFMONTH(t1.timestamp_temp) AS day,
         WEEKOFYEAR(t1.timestamp_temp) AS week,
@@ -183,34 +184,34 @@ def etl_songsplay_table(spark_session, output_location):
         """
     print("Initiating ETL for SongsPlay table.")
     extract_songsplay_data = """
-    SELECT CONCAT(log_temp.ts, log_temp.user_id) AS songplay_id,
-        CAST(log_temp.start_time AS TIMESTAMP) AS start_time,
-        log_temp.user_id,
-        log_temp.level,
-        song_temp.song_id,
-        song_temp.artist_id,
-        log_temp.session_id,
-        log_temp.location,
-        log_temp.user_agent
-    FROM (SELECT FROM_UNIXTIME(ts/1000, 'YYYY-MM-dd hh:mm:ss') AS start_time,
-            ts,
-            userId AS user_id,
-            level,
-            song,
-            artist,
-            location,
-            sessionId AS session_id,
-            userAgent AS user_agent
-        FROM log_data) log_temp
-    JOIN
-        (SELECT song_id,
-            artist_id,
-            artist_name,
-            title
-        FROM song_data) song_temp
-    ON log_temp.song = song_temp.title
-    AND log_temp.artist = song_temp.artist_name
-    """
+        SELECT monotonically_increasing_id() AS songplay_id,
+            CAST(log_temp.start_time AS TIMESTAMP) AS start_time,
+            log_temp.user_id,
+            log_temp.level,
+            song_temp.song_id,
+            song_temp.artist_id,
+            log_temp.session_id,
+            log_temp.location,
+            log_temp.user_agent
+        FROM (SELECT FROM_UNIXTIME(ts/1000, 'YYYY-MM-dd hh:mm:ss') AS start_time,
+                ts,
+                userId AS user_id,
+                level,
+                song,
+                artist,
+                location,
+                sessionId AS session_id,
+                userAgent AS user_agent
+            FROM log_data) log_temp
+        JOIN
+            (SELECT song_id,
+                artist_id,
+                artist_name,
+                title
+            FROM song_data) song_temp
+        ON log_temp.song = song_temp.title
+        AND log_temp.artist = song_temp.artist_name
+        """
     songsplay_data = spark_session.sql(extract_songsplay_data)
     output_dir = os.path.join(output_location, "songsplay.parquet")
     songsplay_data.write.parquet(output_dir)
@@ -226,10 +227,10 @@ def run_etl(spark_session, output_location):
     """
     print("Initiating ETL Workflow")
     etl_users_table(spark_session, output_location)
-    # etl_artists_table(spark_session, output_location)
-    # etl_songs_table(spark_session, output_location)
-    # etl_time_table(spark_session, output_location)
-    # etl_songsplay_table(spark_session, output_location)
+    etl_artists_table(spark_session, output_location)
+    etl_songs_table(spark_session, output_location)
+    etl_time_table(spark_session, output_location)
+    etl_songsplay_table(spark_session, output_location)
     print("ETL Completed")
 
 
@@ -284,3 +285,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
