@@ -267,14 +267,12 @@ def main():
     try:
         load_configuration("aws/credentials.cfg")
     except Exception as e:
-        logging.error("Unable to load configuration data.",
-                      exc_info=True)
+        logging.exception("Unable to load configuration data.")
 
     try:
         spark = initiate_session()
     except Exception as e:
-        logging.error("Unable to initiate spark session.",
-                      exc_info=True)
+        logging.exception("Unable to initiate spark session.")
         exit()
 
     try:
@@ -282,14 +280,14 @@ def main():
                                       os.environ["songs_location"],
                                       os.environ["logs_location"])
     except Exception as e:
-        logging.error("Unable to load data from source",
-                      exc_info=True)
+        logging.exception("Unable to load data from source")
+
     try:
         run_etl(spark,
                 os.environ["output_dir"])
     except Exception as e:
-        logging.error("Unable to complete ETL process",
-                      exc_info=True)
+        logging.exception("Unable to complete ETL process")
+
     finally:
         cleanup(spark)
 
