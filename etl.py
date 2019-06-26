@@ -21,8 +21,8 @@ def load_configuration(config_file):
     songs_url = conf_parser['AWS']['SONGS_PATH']
     songs_location = os.path.join(songs_url, "*/*/*/*.json")
     logs_url = conf_parser['AWS']["LOGS_PATH"]
-    logs_location = os.path.join(logs_url, "*.json")
-    # logs_location = os.path.join(logs_url, "*/*/*.json")
+    # logs_location = os.path.join(logs_url, "*.json")
+    logs_location = os.path.join(logs_url, "*/*/*.json")
     output_dir = conf_parser["AWS"]["OUTPUT_PATH"]
 
     # Assign info to environment variables
@@ -279,10 +279,13 @@ def main():
         songs_df, logs_df = load_data(spark,
                                       os.environ["songs_location"],
                                       os.environ["logs_location"])
+    except Exception as e:
+        logging.error("Unable to load data from source")
+    try:
         run_etl(spark,
                 os.environ["output_dir"])
     except Exception as e:
-        print(e)
+        logging.error("Unable to complete ETL process")
     finally:
         cleanup(spark)
 
